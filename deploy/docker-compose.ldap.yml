@@ -13,6 +13,9 @@ services:
     command: ./bin/docker-entrypoint-api.sh
     env_file:
       - .env
+    environment:
+      - REDIS_URL=redis://plane-redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@plane-db:5432/${POSTGRES_DB}
     depends_on:
       - plane-db
       - plane-redis
@@ -23,6 +26,9 @@ services:
     command: ./bin/docker-entrypoint-worker.sh
     env_file:
       - .env
+    environment:
+      - REDIS_URL=redis://plane-redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@plane-db:5432/${POSTGRES_DB}
     depends_on:
       - api
       - plane-db
@@ -34,6 +40,9 @@ services:
     command: ./bin/docker-entrypoint-beat.sh
     env_file:
       - .env
+    environment:
+      - REDIS_URL=redis://plane-redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@plane-db:5432/${POSTGRES_DB}
     depends_on:
       - api
       - plane-db
@@ -45,6 +54,9 @@ services:
     command: ./bin/docker-entrypoint-migrator.sh
     env_file:
       - .env
+    environment:
+      - REDIS_URL=redis://plane-redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@plane-db:5432/${POSTGRES_DB}
     depends_on:
       - plane-db
       - plane-redis
