@@ -113,6 +113,7 @@ scripts/
 
 # Backup and Sensitive Data
 *.sql
+.env
 backup-v2.5.3-20260418-0847/
 backups/
 deploy/*.env
