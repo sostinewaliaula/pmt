@@ -110,3 +110,12 @@ build/
 .react-router/
 temp/
 scripts/
+
+# Backup and Sensitive Data
+*.sql
+backup-v2.5.3-20260418-0847/
+backups/
+deploy/*.env
+deploy/*.sql
+.dev.env
+caava-migration-ready.tar.gz

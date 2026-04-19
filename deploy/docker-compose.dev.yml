@@ -1,0 +1,137 @@
+services:
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile.web
+    restart: always
+    env_file:
+      - .dev.env
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile.api
+    restart: always
+    command: ./bin/docker-entrypoint-api.sh
+    volumes:
+      - ../apps/api/plane:/code/plane
+    env_file:
+      - .dev.env
+    depends_on:
+      - plane-db
+      - plane-redis
+
+  worker:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile.api
+    restart: always
+    command: ./bin/docker-entrypoint-worker.sh
+    volumes:
+      - ../apps/api/plane:/code/plane
+    env_file:
+      - .dev.env
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+
+  beat-worker:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile.api
+    restart: always
+    command: ./bin/docker-entrypoint-beat.sh
+    volumes:
+      - ../apps/api/plane:/code/plane
+    env_file:
+      - .dev.env
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+
+  migrator:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile.api
+    restart: no
+    command: ./bin/docker-entrypoint-migrator.sh
+    volumes:
+      - ../apps/api/plane:/code/plane
+    env_file:
+      - .dev.env
+    depends_on:
+      - plane-db
+      - plane-redis
+
+  plane-db:
+    image: postgres:15.7-alpine
+    restart: always
+    command: postgres -c 'max_connections=1000'
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    env_file:
+      - .dev.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-caava_admin}
+      POSTGRES_DB: ${POSTGRES_DB:-caava_db}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-caava_password}
+
+  plane-redis:
+    image: valkey/valkey:7.2.11-alpine
+    restart: always
+    volumes:
+      - redisdata_dev:/data
+
+  plane-mq:
+    image: rabbitmq:3.13.6-management-alpine
+    restart: always
+    env_file:
+      - .dev.env
+    volumes:
+      - rabbitmq_data_dev:/var/lib/rabbitmq
+
+  plane-minio:
+    image: minio/minio
+    restart: always
+    command: server /export --console-address ":9090"
+    volumes:
+      - uploads_dev:/export
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-caava-access-key}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-caava-secret-key}
+
+  proxy:
+    build:
+      context: ../apps/proxy
+      dockerfile: Dockerfile.ce
+    restart: always
+    ports:
+      - ${LISTEN_HTTP_PORT:-8091}:80
+    env_file:
+      - .dev.env
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    depends_on:
+      - web
+      - api
+
+  # Mock LDAP for testing
+  mock-ldap:
+    image: osixia/openldap:latest
+    environment:
+      LDAP_ORGANISATION: "Caava Group Dev"
+      LDAP_DOMAIN: "caava.dev"
+      LDAP_ADMIN_PASSWORD: "admin"
+    ports:
+      - "389:389"
+      - "636:636"
+
+volumes:
+  pgdata_dev:
+  redisdata_dev:
+  uploads_dev:
+  rabbitmq_data_dev:

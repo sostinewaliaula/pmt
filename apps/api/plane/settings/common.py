@@ -93,7 +93,61 @@ REST_FRAMEWORK = {
 }
 
 # Django Auth Backend
-AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # default
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# ==============================================================================
+# LDAP AUTHENTICATION CONFIGURATION
+# ==============================================================================
+ENABLE_LDAP = os.environ.get("LDAP_ENABLED", "0") == "1"
+
+if ENABLE_LDAP:
+    try:
+        import ldap
+        from django_auth_ldap.config import LDAPSearch
+
+        # Add LDAP Backend to the top of the priority list
+        AUTHENTICATION_BACKENDS.insert(0, "django_auth_ldap.backend.LDAPBackend")
+
+        # LDAP Server Configuration
+        AUTH_LDAP_SERVER_URI = os.environ.get("LDAP_SERVER_URI")
+        AUTH_LDAP_BIND_DN = os.environ.get("LDAP_BIND_DN")
+        AUTH_LDAP_BIND_PASSWORD = os.environ.get("LDAP_BIND_PASSWORD")
+
+        # User Search Configuration
+        # Example: "ou=users,dc=caava,dc=dev"
+        user_search_base = os.environ.get("LDAP_USER_SEARCH_BASE", "")
+        # Example: "(uid=%(user)s)" or "(sAMAccountName=%(user)s)"
+        user_search_filter = os.environ.get("LDAP_USER_SEARCH_FILTER", "(uid=%(user)s)")
+        
+        AUTH_LDAP_USER_SEARCH = LDAPSearch(
+            user_search_base,
+            ldap.SCOPE_SUBTREE,
+            user_search_filter
+        )
+
+        # Attribute Mapping (LDAP -> Plane User Model)
+        AUTH_LDAP_USER_ATTR_MAP = {
+            "first_name": os.environ.get("LDAP_ATTR_FIRST_NAME", "givenName"),
+            "last_name": os.environ.get("LDAP_ATTR_LAST_NAME", "sn"),
+            "email": os.environ.get("LDAP_ATTR_EMAIL", "mail"),
+        }
+
+        # User Creation Settings
+        AUTH_LDAP_ALWAYS_UPDATE_USER = True
+        AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+            "is_staff": os.environ.get("LDAP_ADMIN_GROUP", "cn=admins,ou=groups,dc=caava,dc=dev"),
+            "is_superuser": os.environ.get("LDAP_ADMIN_GROUP", "cn=admins,ou=groups,dc=caava,dc=dev"),
+        }
+        
+        # Don't create users if they are not in LDAP
+        AUTH_LDAP_AUTHORIZE_ALL_USERS = True
+        
+    except ImportError:
+        # If ldap library is missing (during build or non-LDAP env)
+        pass
+# ==============================================================================
 
 # Root Urls
 ROOT_URLCONF = "plane.urls"

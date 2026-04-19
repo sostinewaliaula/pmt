@@ -71,3 +71,6 @@ opentelemetry-exporter-otlp==1.28.1
 drf-spectacular==0.28.0
 # html sanitizer
 nh3==0.2.18
+
+# LDAP support
+django-auth-ldap==4.8.0

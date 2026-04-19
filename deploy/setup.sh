@@ -11,7 +11,7 @@ RED='\033[0;31m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-REPO_RAW_URL="https://raw.githubusercontent.com/sostinewaliaula/pmt/main/deploy"
+REPO_RAW_URL="https://raw.githubusercontent.com/sostinewaliaula/pmt/feature/ldap/deploy"
 LOG_DIR="./logs"
 LOG_FILE="${LOG_DIR}/caava-setup.log"
 
@@ -34,7 +34,8 @@ show_menu() {
     echo -e "   5) ${BLUE}View Logs${NC}"
     echo -e "   6) ${RED}Backup Data${NC} (Database & Uploads)"
     echo -e "   7) ${RED}Restore Data${NC} (From backup file)"
-    echo -e "   8) Exit"
+    echo -e "   8) ${YELLOW}Developer Mode${NC} (Build local code & Mock LDAP)"
+    echo -e "   9) Exit"
     echo -ne "\nAction [2]: "
 }
 
@@ -141,6 +142,37 @@ view_logs() {
     docker compose logs -f
 }
 
+dev_mode() {
+    echo -e "${YELLOW}Entering Developer Mode...${NC}"
+    log "Initiating developer mode"
+
+    # 1. Download dev compose if not present
+    if [ ! -f "docker-compose.dev.yml" ]; then
+        echo -e "${BLUE}Downloading development orchestration files...${NC}"
+        curl -fsSL -o docker-compose.dev.yml "${REPO_RAW_URL}/docker-compose.dev.yml"
+    fi
+
+    # 2. Setup dev .env if not present
+    if [ ! -f ".dev.env" ]; then
+        echo -e "${BLUE}Creating .dev.env from template...${NC}"
+        curl -fsSL -o .dev.env "${REPO_RAW_URL}/caava.dev.env.example"
+        # Set dev keys
+        # Replace localhost with 8091 for dev
+        sed -i 's/localhost/localhost:8091/g' .dev.env
+        echo "SECRET_KEY=\"caava-dev-secret-key-12345\"" >> .dev.env
+        echo "LIVE_SERVER_SECRET_KEY=\"caava-dev-live-key-12345\"" >> .dev.env
+    fi
+
+    echo -e "${GREEN}Building and launching Sandbox on Port 8091...${NC}"
+    # Use -p to isolate dev project from production
+    docker compose -p caava-dev -f docker-compose.dev.yml up -d --build
+    
+    echo -e "${BOLD}${GREEN}✅ Sandbox is live!${NC}"
+    echo -e "URL: ${BLUE}http://localhost:8091${NC}"
+    echo -e "Logs: ${BLUE}docker compose -p caava-dev -f docker-compose.dev.yml logs -f${NC}"
+    log "Developer mode active on port 8091"
+}
+
 while true; do
     show_menu
     read choice
@@ -157,7 +189,8 @@ while true; do
         5) view_logs ;;
         6) backup_data ;;
         7) restore_data ;;
-        8) exit 0 ;;
+        8) dev_mode ;;
+        9) exit 0 ;;
         *) echo -e "${RED}Invalid option.${NC}" ;;
     esac
 done
