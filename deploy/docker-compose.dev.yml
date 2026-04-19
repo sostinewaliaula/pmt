@@ -11,8 +11,8 @@ services:
 
   api:
     build:
-      context: ..
-      dockerfile: apps/api/Dockerfile.api
+      context: ../apps/api
+      dockerfile: Dockerfile.api
     restart: always
     command: ./bin/docker-entrypoint-api.sh
     volumes:
@@ -25,8 +25,8 @@ services:
 
   worker:
     build:
-      context: ..
-      dockerfile: apps/api/Dockerfile.api
+      context: ../apps/api
+      dockerfile: Dockerfile.api
     restart: always
     command: ./bin/docker-entrypoint-worker.sh
     volumes:
@@ -40,8 +40,8 @@ services:
 
   beat-worker:
     build:
-      context: ..
-      dockerfile: apps/api/Dockerfile.api
+      context: ../apps/api
+      dockerfile: Dockerfile.api
     restart: always
     command: ./bin/docker-entrypoint-beat.sh
     volumes:
@@ -55,8 +55,8 @@ services:
 
   migrator:
     build:
-      context: ..
-      dockerfile: apps/api/Dockerfile.api
+      context: ../apps/api
+      dockerfile: Dockerfile.api
     restart: no
     command: ./bin/docker-entrypoint-migrator.sh
     volumes:
@@ -106,8 +106,8 @@ services:
 
   proxy:
     build:
-      context: ..
-      dockerfile: apps/proxy/Dockerfile.ce
+      context: ../apps/proxy
+      dockerfile: Dockerfile.ce
     restart: always
     ports:
       - ${LISTEN_HTTP_PORT:-8091}:80
