@@ -66,8 +66,8 @@ backup_data() {
     
     # 2. Backup Uploads (Minio Volume)
     echo -e "${BLUE}Compressing Uploads...${NC}"
-    # We use a temporary container to access the volume
-    docker run --rm --volumes-from plane-minio -v $(pwd)/backups/"$BACKUP_NAME":/backup alpine tar czf /backup/uploads.tar.gz -C /export .
+    MINIO_ID=$(docker compose ps -q plane-minio)
+    docker run --rm --volumes-from "$MINIO_ID" -v $(pwd)/backups/"$BACKUP_NAME":/backup alpine tar czf /backup/uploads.tar.gz -C /export .
 
     # 3. Final compression
     tar -czf ./backups/"$BACKUP_NAME".tar.gz -C ./backups/"$BACKUP_NAME" .
@@ -92,7 +92,8 @@ restore_data() {
 
     # 1. Restore Uploads
     echo -e "${BLUE}Restoring Uploads...${NC}"
-    docker run --rm -v ./restore_tmp:/backup --volumes-from plane-minio alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export"
+    MINIO_ID=$(docker compose ps -q plane-minio)
+    docker run --rm -v ./restore_tmp:/backup --volumes-from "$MINIO_ID" alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export"
 
     # 2. Restore Database
     echo -e "${BLUE}Restoring Database...${NC}"
