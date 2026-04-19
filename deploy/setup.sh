@@ -36,7 +36,8 @@ show_menu() {
     echo -e "   7) ${RED}Restore Data${NC} (From backup file)"
     echo -e "   8) ${YELLOW}Developer Mode${NC} (Build local code & Mock LDAP)"
     echo -e "   9) ${GREEN}Deploy LDAP Release${NC} (Pull GitHub Images)"
-    echo -e "   10) Exit"
+    echo -e "   10) ${RED}Wipe LDAP Data${NC} (Use to reset password/database)"
+    echo -e "   11) Exit"
     echo -ne "\nAction [2]: "
 }
 
@@ -199,6 +200,20 @@ ldap_release() {
     log "LDAP release active on port 8092"
 }
 
+wipe_ldap() {
+    echo -e "${RED}${BOLD}WARNING: This will permanently delete your LDAP test database and uploads!${NC}"
+    echo -ne "Are you sure you want to continue? (y/N): "
+    read confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}Wiping LDAP Release data...${NC}"
+        docker compose -p caava-ldap -f docker-compose.ldap.yml down -v
+        echo -e "${GREEN}✓ Done. You can now run Option 9 for a fresh start.${NC}"
+        log "LDAP data wiped successfully"
+    else
+        echo -e "${BLUE}Wipe cancelled.${NC}"
+    fi
+}
+
 while true; do
     show_menu
     read choice
@@ -217,7 +232,8 @@ while true; do
         7) restore_data ;;
         8) dev_mode ;;
         9) ldap_release ;;
-        10) exit 0 ;;
+        10) wipe_ldap ;;
+        11) exit 0 ;;
         *) echo -e "${RED}Invalid option.${NC}" ;;
     esac
 done
