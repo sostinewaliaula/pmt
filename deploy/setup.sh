@@ -30,25 +30,24 @@ show_menu() {
 }
 
 install() {
-    echo -ne "\nEnter folder name for installation [caava-app]: "
-    read folder
-    folder=${folder:-caava-app}
+    echo -e "${YELLOW}Installing Caava Group orchestration files...${NC}"
 
-    echo -e "${YELLOW}Installing Caava Group into ./${folder}...${NC}"
-    mkdir -p "$folder"
-    cd "$folder" || exit
-
-    # Download files
-    echo -e "${BLUE}Downloading orchestration files...${NC}"
+    # Download files to current directory
+    echo -e "${BLUE}Downloading orchestration files from GitHub...${NC}"
     curl -fsSL -o docker-compose.yml "${REPO_RAW_URL}/docker-compose.yml"
-    curl -fsSL -o .env "${REPO_RAW_URL}/caava.env.example"
-
-    # Generate SECRET_KEY
-    SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
-    echo -e "\nSECRET_KEY=\"$SECRET_KEY\"" >> .env
     
-    echo -e "${GREEN}✓ Installation completed in ./${folder}${NC}"
-    echo -e "${YELLOW}Next Step: Edit the .env file in ./${folder} to set your WEB_URL.${NC}"
+    if [ ! -f ".env" ]; then
+        curl -fsSL -o .env "${REPO_RAW_URL}/caava.env.example"
+        # Generate SECRET_KEY
+        SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
+        echo -e "\nSECRET_KEY=\"$SECRET_KEY\"" >> .env
+        echo -e "${GREEN}✓ Created .env with new SECRET_KEY${NC}"
+    else
+        echo -e "${BLUE}i${NC} .env already exists, skipping download to protect your settings."
+    fi
+
+    echo -e "${GREEN}✓ Deployment files are ready in $(pwd)${NC}"
+    echo -e "${YELLOW}Next Step: Edit the .env file to set your WEB_URL, then run Option 2 to Start.${NC}"
 }
 
 start() {
