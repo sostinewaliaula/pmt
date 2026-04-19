@@ -50,7 +50,7 @@ services:
 
   migrator:
     image: ghcr.io/sostinewaliaula/caava-api:feature-ldap
-    restart: no
+    restart: on-failure
     command: ./bin/docker-entrypoint-migrator.sh
     env_file:
       - .env
