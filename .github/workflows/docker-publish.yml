@@ -2,7 +2,7 @@ name: Build and Publish Caava Group Images
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "feature/ldap"]
   workflow_dispatch:
 
 env:
@@ -55,8 +55,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PREFIX }}-${{ matrix.service }}
           tags: |
-            type=raw,value=latest
-            type=sha
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=feature-ldap,enable=${{ github.ref == 'refs/heads/feature/ldap' }}
+            type=sha,format=long
+            type=ref,event=branch
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

@@ -35,7 +35,8 @@ show_menu() {
     echo -e "   6) ${RED}Backup Data${NC} (Database & Uploads)"
     echo -e "   7) ${RED}Restore Data${NC} (From backup file)"
     echo -e "   8) ${YELLOW}Developer Mode${NC} (Build local code & Mock LDAP)"
-    echo -e "   9) Exit"
+    echo -e "   9) ${GREEN}Deploy LDAP Release${NC} (Pull GitHub Images)"
+    echo -e "   10) Exit"
     echo -ne "\nAction [2]: "
 }
 
@@ -173,6 +174,27 @@ dev_mode() {
     log "Developer mode active on port 8091"
 }
 
+ldap_release() {
+    echo -e "${GREEN}Deploying LDAP Release from GitHub...${NC}"
+    log "Initiating LDAP release deployment"
+
+    # 1. Download LDAP compose if not present
+    if [ ! -f "docker-compose.ldap.yml" ]; then
+        echo -e "${BLUE}Downloading LDAP orchestration files...${NC}"
+        curl -fsSL -o docker-compose.ldap.yml "${REPO_RAW_URL}/docker-compose.ldap.yml"
+    fi
+
+    echo -e "${BLUE}Pulling pre-built feature images from GHCR...${NC}"
+    docker compose -p caava-ldap -f docker-compose.ldap.yml pull
+    
+    echo -e "${GREEN}Launching LDAP Release on Port 8092...${NC}"
+    docker compose -p caava-ldap -f docker-compose.ldap.yml up -d
+    
+    echo -e "${BOLD}${GREEN}✅ LDAP Release is live!${NC}"
+    echo -e "URL: ${BLUE}http://localhost:8092${NC}"
+    log "LDAP release active on port 8092"
+}
+
 while true; do
     show_menu
     read choice
@@ -190,7 +212,8 @@ while true; do
         6) backup_data ;;
         7) restore_data ;;
         8) dev_mode ;;
-        9) exit 0 ;;
+        9) ldap_release ;;
+        10) exit 0 ;;
         *) echo -e "${RED}Invalid option.${NC}" ;;
     esac
 done
