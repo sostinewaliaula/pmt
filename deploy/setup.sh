@@ -169,7 +169,9 @@ dev_mode() {
     docker compose -p caava-dev -f docker-compose.dev.yml up -d --build
     
     echo -e "${BOLD}${GREEN}✅ Sandbox is live!${NC}"
-    echo -e "URL: ${BLUE}http://localhost:8091${NC}"
+    # Try to extract URL from .dev.env
+    DEV_URL=$(grep WEB_URL .dev.env | cut -d'=' -f2 | tr -d '"')
+    echo -e "URL: ${BLUE}${DEV_URL:-http://localhost:8091}${NC}"
     echo -e "Logs: ${BLUE}docker compose -p caava-dev -f docker-compose.dev.yml logs -f${NC}"
     log "Developer mode active on port 8091"
 }
@@ -191,7 +193,9 @@ ldap_release() {
     docker compose -p caava-ldap -f docker-compose.ldap.yml up -d
     
     echo -e "${BOLD}${GREEN}✅ LDAP Release is live!${NC}"
-    echo -e "URL: ${BLUE}http://localhost:8092${NC}"
+    # Try to extract URL from .env
+    PROD_URL=$(grep WEB_URL .env | cut -d'=' -f2 | tr -d '"')
+    echo -e "URL: ${BLUE}${PROD_URL:-http://localhost:8092}${NC}"
     log "LDAP release active on port 8092"
 }
 
