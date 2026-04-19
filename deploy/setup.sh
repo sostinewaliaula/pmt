@@ -39,10 +39,12 @@ install() {
     
     if [ ! -f ".env" ]; then
         curl -fsSL -o .env "${REPO_RAW_URL}/caava.env.example"
-        # Generate SECRET_KEY
+        # Generate SECRET_KEY and LIVE_SERVER_SECRET_KEY
         SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
+        LIVE_SECRET=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
         echo -e "\nSECRET_KEY=\"$SECRET_KEY\"" >> .env
-        echo -e "${GREEN}✓ Created .env with new SECRET_KEY${NC}"
+        echo -e "LIVE_SERVER_SECRET_KEY=\"$LIVE_SECRET\"" >> .env
+        echo -e "${GREEN}✓ Created .env with new Security Keys${NC}"
     else
         echo -e "${BLUE}i${NC} .env already exists, skipping download to protect your settings."
     fi
@@ -65,7 +67,7 @@ backup_data() {
     # 2. Backup Uploads (Minio Volume)
     echo -e "${BLUE}Compressing Uploads...${NC}"
     # We use a temporary container to access the volume
-    docker run --rm --volumes-from caava-minio -v $(pwd)/backups/"$BACKUP_NAME":/backup alpine tar czf /backup/uploads.tar.gz -C /export .
+    docker run --rm --volumes-from plane-minio -v $(pwd)/backups/"$BACKUP_NAME":/backup alpine tar czf /backup/uploads.tar.gz -C /export .
 
     # 3. Final compression
     tar -czf ./backups/"$BACKUP_NAME".tar.gz -C ./backups/"$BACKUP_NAME" .
@@ -90,7 +92,7 @@ restore_data() {
 
     # 1. Restore Uploads
     echo -e "${BLUE}Restoring Uploads...${NC}"
-    docker run --rm -v ./restore_tmp:/backup --volumes-from caava-minio alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export"
+    docker run --rm -v ./restore_tmp:/backup --volumes-from plane-minio alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export"
 
     # 2. Restore Database
     echo -e "${BLUE}Restoring Database...${NC}"

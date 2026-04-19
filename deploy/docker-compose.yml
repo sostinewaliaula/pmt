@@ -2,12 +2,16 @@ services:
   web:
     image: ghcr.io/sostinewaliaula/caava-web:latest
     restart: always
+    env_file:
+      - .env
     depends_on:
       - api
 
   admin:
     image: ghcr.io/sostinewaliaula/caava-admin:latest
     restart: always
+    env_file:
+      - .env
     depends_on:
       - api
       - web
@@ -15,6 +19,8 @@ services:
   space:
     image: ghcr.io/sostinewaliaula/caava-space:latest
     restart: always
+    env_file:
+      - .env
     depends_on:
       - api
       - web
@@ -64,6 +70,8 @@ services:
   live:
     image: ghcr.io/sostinewaliaula/caava-live:latest
     restart: always
+    env_file:
+      - .env
 
   plane-db:
     image: postgres:15.7-alpine
