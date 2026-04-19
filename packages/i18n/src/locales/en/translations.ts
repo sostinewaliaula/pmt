@@ -242,7 +242,7 @@ export default {
   full_changelog: "Full changelog",
   support: "Support",
   forum: "Forum",
-  powered_by_plane_pages: "Powered by Plane Pages",
+  powered_by_plane_pages: "Powered by Caava Group Pages",
   please_select_at_least_one_invitation: "Please select at least one invitation.",
   please_select_at_least_one_invitation_description: "Please select at least one invitation to join the workspace.",
   we_see_that_someone_has_invited_you_to_join_a_workspace: "We see that someone has invited you to join a workspace",
@@ -407,7 +407,7 @@ export default {
       not_right_now: "Not right now",
       create_project: {
         title: "Create a project",
-        description: "Most things start with a project in Plane.",
+        description: "Most things start with a project in Caava Group.",
         cta: "Get started",
       },
       invite_team: {
@@ -421,7 +421,7 @@ export default {
         cta: "Configure this workspace",
       },
       personalize_account: {
-        title: "Make Plane yours.",
+        title: "Make Caava Group yours.",
         description: "Choose your picture, colors, and more.",
         cta: "Personalize now",
       },
@@ -455,7 +455,7 @@ export default {
       },
     },
     new_at_plane: {
-      title: "New at Plane",
+      title: "New at Caava Group",
     },
     quick_tutorial: {
       title: "Quick tutorial",

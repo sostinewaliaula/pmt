@@ -162,19 +162,19 @@
     --neutral-1100: oklch(0.4377 0.0066 230.87);
     --neutral-1200: oklch(0.2378 0.0029 230.83);
     --neutral-black: oklch(0.1472 0.0034 230.83);
-    /* Brand colors */
-    --brand-100: oklch(0.9847 0.0083 236.56);
-    --brand-200: oklch(0.9715 0.0167 230.9);
-    --brand-300: oklch(0.9428 0.0341 230.22);
-    --brand-400: oklch(0.9008 0.0587 232);
-    --brand-500: oklch(0.8414 0.0947 233.08);
-    --brand-600: oklch(0.7649 0.1392 236.3);
-    --brand-700: oklch(0.6766 0.1665 243.91);
-    --brand-900: oklch(0.4347 0.104093 242.4823);
-    --brand-1000: oklch(0.3399 0.0783 240.32);
-    --brand-1100: oklch(0.2626 0.0578 237.5);
-    --brand-1200: oklch(0.2093 0.0438 234.02);
-    --brand-default: oklch(0.4799 0.1158 242.91);
+    /* Brand colors (Caava Group Blue Tint #152F52) */
+    --brand-100: #eef2f6;
+    --brand-200: #dce4ee;
+    --brand-300: #b9cadd;
+    --brand-400: #88a7c5;
+    --brand-500: #5983ac;
+    --brand-600: #46698e;
+    --brand-700: #385472;
+    --brand-900: #1d3652;
+    --brand-default: #152F52;
+    --brand-1000: #122846;
+    --brand-1100: #0f1f38;
+    --brand-1200: #0b1525;
     /* Green/Success colors */
     --green-100: oklch(0.9819 0.0181 155.83);
     --green-200: oklch(0.9624 0.0434 156.74);
@@ -199,18 +199,18 @@
     --amber-900: oklch(0.4747 0.135757 44.9806);
     --amber-1000: oklch(0.4149 0.1126 45.88);
     --amber-1100: oklch(0.279 0.0773 45.6);
-    /* Red/Danger colors */
-    --red-100: oklch(0.9705 0.0129 17.38);
-    --red-200: oklch(0.9365 0.032 17.74);
-    --red-300: oklch(0.8834 0.0616 18.39);
-    --red-400: oklch(0.8053 0.1109 19.78);
-    --red-500: oklch(0.7022 0.1892 22.23);
-    --red-600: oklch(0.6378 0.2373 25.44);
-    --red-700: oklch(0.583 0.238666 28.4765);
-    --red-800: oklch(0.5095 0.208583 28.513);
-    --red-900: oklch(0.4446 0.1774 26.79);
-    --red-1000: oklch(0.3967 0.1408 25.71);
-    --red-1100: oklch(0.3493 0.1215 25.21);
+    /* Red/Danger colors (Caava Group Red #D90429) */
+    --red-100: #fbe6e9;
+    --red-200: #f7ccd4;
+    --red-300: #ef99a9;
+    --red-400: #e24d67;
+    --red-500: #D90429;
+    --red-600: #c30425;
+    --red-700: #a3031f;
+    --red-800: #820319;
+    --red-900: #6b0214;
+    --red-1000: #570211;
+    --red-1100: #42010d;
 
     /* -------------------- Light mode custom(derived) colors -------------------- */
     /* Scrollbar colors */
