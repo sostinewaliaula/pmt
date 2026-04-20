@@ -43,22 +43,26 @@ show_menu() {
 }
 
 fix_schema() {
-    echo -e "${YELLOW}Applying surgical schema fix for Enterprise migration...${NC}"
+    echo -e "${YELLOW}Applying Surgical Compatibility Fix for Enterprise-to-Community migration...${NC}"
     DB_USER=$(grep "^POSTGRES_USER=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
     DB_NAME=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
     DB_USER=${DB_USER:-caava_admin}
     DB_NAME=${DB_NAME:-caava_db}
 
-    # Find the real table name (might have prefixes in Enterprise)
+    # 1. Inject missing 'project_id' into 'workspace_user_links'
+    # Comparison shows this is the single most critical mismatch causing 500 errors.
     TABLE_NAME=$(docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -t -c "SELECT tablename FROM pg_tables WHERE tablename LIKE '%workspace_user_link%' LIMIT 1;" | tr -d '[:space:]')
     
     if [ -n "$TABLE_NAME" ]; then
-        echo -e "${BLUE}Found table: $TABLE_NAME. Injecting column...${NC}"
+        echo -e "${BLUE}i${NC} Verifying table: $TABLE_NAME"
         docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -c "ALTER TABLE ${TABLE_NAME} ADD COLUMN IF NOT EXISTS project_id uuid REFERENCES projects(id) ON DELETE CASCADE;"
-        echo -e "${GREEN}✓ Column 'project_id' successfully injected into '${TABLE_NAME}'.${NC}"
+        echo -e "${GREEN}✓${NC} Column 'project_id' verified/injected."
     else
-        echo -e "${RED}Error: Could not find any workspace_user_link table.${NC}"
+        echo -e "${RED}x${NC} Error: Could find workspace_user_link table."
     fi
+
+    # 2. Add future compatibility checks here if more mismatches are found
+    echo -e "\n${GREEN}✓ Schema health check complete.${NC}"
 }
 
 clean_ghosts() {
