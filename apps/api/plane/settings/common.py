@@ -11,6 +11,12 @@ from urllib.parse import urljoin
 
 # Third party imports
 import dj_database_url
+try:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch
+except ImportError:
+    ldap = None
+    LDAPSearch = None
 
 # Django imports
 from django.core.management.utils import get_random_secret_key
@@ -102,6 +108,17 @@ AUTHENTICATION_BACKENDS = (
 AUTH_LDAP_SERVER_URI = os.environ.get("LDAP_SERVER_URI", "")
 AUTH_LDAP_CONNECTION_OPTIONS = {
     "OPT_REFERRALS": 0,
+}
+# Mandatory placeholders to prevent django-auth-ldap from crashing on startup
+if ldap and LDAPSearch:
+    AUTH_LDAP_USER_SEARCH = LDAPSearch("", ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+else:
+    AUTH_LDAP_USER_SEARCH = None
+
+AUTH_LDAP_USER_ATTR_MAP = {
+    "first_name": "givenName",
+    "last_name": "sn",
+    "email": "mail",
 }
 
 # Root Urls

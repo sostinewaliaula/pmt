@@ -11,8 +11,14 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 # Third Party imports
-from django_auth_ldap.backend import LDAPBackend
-from django_auth_ldap.config import LDAPSearch
+try:
+    import ldap
+    from django_auth_ldap.backend import LDAPBackend
+    from django_auth_ldap.config import LDAPSearch
+except ImportError:
+    ldap = None
+    LDAPBackend = object  # Fallback to avoid inheritance crash
+    LDAPSearch = None
 
 # Module imports
 from plane.license.utils.instance_value import get_configuration_value
@@ -25,6 +31,10 @@ class DynamicLDAPBackend(LDAPBackend):
     """
 
     def authenticate(self, request, username=None, password=None, **kwargs):
+        # 0. Safety Check for library availability
+        if ldap is None or LDAPBackend is object:
+            return None
+
         # 1. Fetch LDAP configurations from DB/Env
         try:
             (
