@@ -41,8 +41,8 @@ show_menu() {
 }
 
 run_migrations() {
-    echo -e "${YELLOW}Running Database Migrations...${NC}"
-    docker compose exec -T plane-api python manage.py migrate
+    echo -e "${YELLOW}Running official Database Migrator...${NC}"
+    docker compose run --rm migrator
     echo -e "${GREEN}✓ Done. Database schema is now up to date.${NC}"
 }
 
