@@ -87,8 +87,14 @@ restore_data() {
 
     # Restore Database
     echo -e "${BLUE}Restoring Database...${NC}"
-    docker compose exec -T plane-db psql -U caava -d caava_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-    docker compose exec -T plane-db psql -U caava -d caava_db < ./restore_tmp/database.sql
+    # Read DB details from .env (Default to caava/caava_db if not found)
+    DB_USER=$(grep POSTGRES_USER .env | cut -d'=' -f2 | tr -d '"' | tr -d '\r')
+    DB_NAME=$(grep POSTGRES_DB .env | cut -d'=' -f2 | tr -d '"' | tr -d '\r')
+    DB_USER=${DB_USER:-caava}
+    DB_NAME=${DB_NAME:-caava_db}
+
+    docker compose exec -T plane-db psql -U postgres -c "DROP DATABASE IF EXISTS ${DB_NAME}; CREATE DATABASE ${DB_NAME}; GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
+    docker compose exec -T plane-db psql -U postgres -d ${DB_NAME} < ./restore_tmp/database.sql
 
     rm -rf ./restore_tmp
     echo -e "${GREEN}✓ Restoration completed successfully!${NC}"
