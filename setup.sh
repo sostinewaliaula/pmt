@@ -31,9 +31,51 @@ show_menu() {
     echo -e "   4) ${YELLOW}Stop Services${NC} (docker-compose down)"
     echo -e "   5) ${BLUE}Restart Services${NC}"
     echo -e "   6) ${BLUE}View Logs${NC}"
-    echo -e "   7) ${RED}Backup Data${NC}"
+    echo -e "   7) ${RED}Restore Data${NC} (Full or DB Only)"
     echo -e "   8) Exit"
     echo -ne "\nAction [3]: "
+}
+
+restore_data() {
+    echo -e "${RED}${BOLD}WARNING: This will overwrite your current data!${NC}"
+    echo -ne "Enter the path to your backup .tar.gz file: "
+    read backup_file
+
+    if [ ! -f "$backup_file" ]; then
+        echo -e "${RED}Error: Backup file not found.${NC}"
+        return
+    fi
+
+    echo -e "\n${BOLD}Select Restoration Type:${NC}"
+    echo -e "   1) ${BLUE}Database Only${NC} (Cleanest - No old logos/attachments)"
+    echo -e "   2) ${GREEN}Full Restore${NC} (Includes all uploads/images)"
+    echo -ne "\nChoice [1]: "
+    read restore_choice
+
+    echo -e "${YELLOW}Preparing restoration...${NC}"
+    mkdir -p ./restore_tmp
+    tar -xzf "$backup_file" -C ./restore_tmp
+
+    if [[ "$restore_choice" == "2" ]]; then
+        # Restore Uploads
+        echo -e "${BLUE}Restoring Uploads...${NC}"
+        # We find the volume name dynamically
+        UPLOAD_VOL=$(docker volume ls -q | grep uploads | head -n 1)
+        docker run --rm -v ./restore_tmp:/backup -v "$UPLOAD_VOL":/export alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export"
+    else
+        # Wipe Uploads (Clean Start)
+        echo -e "${BLUE}Wiping existing storage for a clean start...${NC}"
+        UPLOAD_VOL=$(docker volume ls -q | grep uploads | head -n 1)
+        docker run --rm -v "$UPLOAD_VOL":/export alpine sh -c "rm -rf /export/*"
+    fi
+
+    # Restore Database
+    echo -e "${BLUE}Restoring Database...${NC}"
+    docker compose exec -T plane-db psql -U caava -d caava_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+    docker compose exec -T plane-db psql -U caava -d caava_db < ./restore_tmp/database.sql
+
+    rm -rf ./restore_tmp
+    echo -e "${GREEN}✓ Restoration completed successfully!${NC}"
 }
 
 setup_env() {
@@ -108,9 +150,7 @@ while true; do
         4) stop_services ;;
         5) restart_services ;;
         6) view_logs ;;
-        7) 
-            echo -e "${YELLOW}Backup functionality to be implemented based on your volume storage style.${NC}"
-            ;;
+        7) restore_data ;;
         8) exit 0 ;;
         *) echo -e "${RED}Invalid option, please try again.${NC}" ;;
     esac
