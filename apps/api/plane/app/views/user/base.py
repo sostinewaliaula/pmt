@@ -45,7 +45,7 @@ from plane.db.models import (
 )
 from plane.license.models import Instance, InstanceAdmin
 from plane.utils.paginator import BasePaginator
-from plane.authentication.utils.host import user_ip
+from plane.utils.host import user_ip
 from plane.bgtasks.user_deactivation_email_task import user_deactivation_email
 from plane.utils.host import base_host
 from plane.bgtasks.user_email_update_task import send_email_update_magic_code, send_email_update_confirmation

@@ -32,7 +32,7 @@ from plane.license.models import Instance, InstanceAdmin
 from plane.db.models import User, Profile
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.authentication.utils.login import user_login
-from plane.authentication.utils.host import base_host, user_ip
+from plane.utils.host import base_host, user_ip
 from plane.authentication.adapter.error import (
     AUTHENTICATION_ERROR_CODES,
     AuthenticationException,

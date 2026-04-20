@@ -20,7 +20,7 @@ from plane.authentication.utils.redirection_path import get_redirection_path
 from plane.authentication.utils.user_auth_workflow import post_user_auth_workflow
 from plane.bgtasks.magic_link_code_task import magic_link
 from plane.license.models import Instance
-from plane.authentication.utils.host import base_host
+from plane.utils.host import base_host
 from plane.db.models import User, Profile
 from plane.authentication.adapter.error import (
     AuthenticationException,

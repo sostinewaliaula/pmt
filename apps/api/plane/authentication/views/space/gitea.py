@@ -14,7 +14,7 @@ from django.views import View
 from plane.authentication.provider.oauth.gitea import GiteaOAuthProvider
 from plane.authentication.utils.login import user_login
 from plane.license.models import Instance
-from plane.authentication.utils.host import base_host
+from plane.utils.host import base_host
 from plane.authentication.adapter.error import (
     AUTHENTICATION_ERROR_CODES,
     AuthenticationException,

@@ -22,7 +22,7 @@ from plane.authentication.adapter.error import (
 )
 from django.middleware.csrf import get_token
 from plane.utils.cache import invalidate_cache
-from plane.authentication.utils.host import base_host
+from plane.utils.host import base_host
 
 
 class CSRFTokenEndpoint(APIView):

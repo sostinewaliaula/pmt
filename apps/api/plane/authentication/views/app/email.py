@@ -12,7 +12,7 @@ from django.views import View
 from plane.authentication.provider.credentials.email import EmailProvider
 from plane.authentication.utils.login import user_login
 from plane.license.models import Instance
-from plane.authentication.utils.host import base_host
+from plane.utils.host import base_host
 from plane.authentication.utils.redirection_path import get_redirection_path
 from plane.authentication.utils.user_auth_workflow import post_user_auth_workflow
 from plane.db.models import User

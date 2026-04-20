@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 
 # Module imports
-from plane.authentication.utils.host import base_host, user_ip
+from plane.utils.host import base_host, user_ip
 from plane.db.models import User
 from plane.utils.path_validator import get_safe_redirect_url
 

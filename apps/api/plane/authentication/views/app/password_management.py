@@ -27,7 +27,7 @@ from plane.bgtasks.forgot_password_task import forgot_password
 from plane.license.models import Instance
 from plane.db.models import User
 from plane.license.utils.instance_value import get_configuration_value
-from plane.authentication.utils.host import base_host
+from plane.utils.host import base_host
 from plane.authentication.adapter.error import (
     AuthenticationException,
     AUTHENTICATION_ERROR_CODES,

@@ -22,10 +22,11 @@ def base_host(
 ) -> str:
     """Utility function to return host / origin from the request"""
     # Calculate the base origin from request
-    base_origin = settings.WEB_URL or settings.APP_BASE_URL
+    base_origin = settings.WEB_URL or settings.APP_BASE_URL or "http://localhost"
 
-    if not base_origin:
-        raise ImproperlyConfigured("APP_BASE_URL or WEB_URL is not set")
+    # Ensure it's a string and starts with http
+    if not isinstance(base_origin, str) or not base_origin.startswith("http"):
+        base_origin = "http://localhost"
 
     # Admin redirection
     if is_admin:
