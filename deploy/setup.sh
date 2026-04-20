@@ -182,31 +182,62 @@ restore_data() {
 setup_env() {
     echo -e "\n${YELLOW}Setting up orchestration and environment files...${NC}"
 
-    # 1. Download docker-compose.yml if missing
-    if [ ! -f "docker-compose.yml" ]; then
+    # 1. Download docker-compose.yml if missing or empty
+    if [ ! -f "docker-compose.yml" ] || [ ! -s "docker-compose.yml" ]; then
         echo -e "${BLUE}Downloading docker-compose.yml from GitHub...${NC}"
-        curl -fsSL -o docker-compose.yml "${REPO_RAW_URL}/docker-compose.yml"
+        curl -L -o docker-compose.yml "${REPO_RAW_URL}/docker-compose.yml"
     fi
     
     # 2. Setup .env
-    if [ ! -f ".env" ]; then
+    if [ ! -f ".env" ] || [ ! -s ".env" ]; then
         echo -e "${BLUE}Downloading .env.example from GitHub...${NC}"
-        curl -fsSL -o .env.example "${REPO_RAW_URL}/caava.env.example"
-        cp .env.example .env
-        echo -e "${GREEN}✓${NC} Created .env from remote example"
+        curl -L -o .env.example "${REPO_RAW_URL}/caava.env.example"
         
-        # Generate Security Keys and Backend Glue
-        echo -e "${YELLOW}Generating Security Keys and Backend Glue...${NC}"
+        if [ ! -s ".env.example" ]; then
+            echo -e "${RED}Error: Failed to download .env example. Please check your internet connection.${NC}"
+            return 1
+        fi
+
+        cp .env.example .env
+        
+        echo -e "\n${BOLD}${YELLOW}Interactive Environment Configuration${NC}"
+        echo -e "Help us configure your instance by answering a few questions:\n"
+
+        echo -ne "   ${BLUE}1. Server IP or Domain${NC} (e.g. http://10.176.16.100): "
+        read web_url
+        web_url=${web_url:-http://localhost}
+        
+        echo -ne "   ${BLUE}2. Database Password${NC} (Secret): "
+        read -s db_pass
+        echo ""
+        db_pass=${db_pass:-caava_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c12)}
+
+        echo -e "\n${YELLOW}Finalizing configuration files...${NC}"
+
+        # Generate Security Keys
         SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
         LIVE_SECRET=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
-        echo -e "\n# Security Keys" >> .env
-        echo -e "SECRET_KEY=\"$SECRET_KEY\"" >> .env
-        echo -e "LIVE_SERVER_SECRET_KEY=\"$LIVE_SECRET\"" >> .env
-        echo -e "\n# Backend Connection URLs" >> .env
-        echo -e "REDIS_URL=redis://plane-redis:6379/0" >> .env
-        echo -e "DATABASE_URL=postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@plane-db:5432/\${POSTGRES_DB}" >> .env
+        MINIO_SECRET=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c16)
+
+        # Apply changes using sed in-place
+        # Use different delimiters | to avoid issues with URL slashes
+        sed -i "s|REPLACE_ME_WEB_URL|$web_url|g" .env
+        sed -i "s|REPLACE_ME_DB_PASSWORD|$db_pass|g" .env
+        sed -i "s|REPLACE_ME_SECRET_KEY|$SECRET_KEY|g" .env
+        sed -i "s|REPLACE_ME_LIVE_SECRET_KEY|$LIVE_SECRET|g" .env
+        sed -i "s|REPLACE_ME_MINIO_SECRET_KEY|$MINIO_SECRET|g" .env
+        
+        # Hardcode DATABASE_URL to avoid Docker variable expansion bugs
+        DB_USER="caava_admin"
+        DB_NAME="caava_db"
+        DATABASE_URL="postgresql://${DB_USER}:${db_pass}@plane-db:5432/${DB_NAME}"
+        sed -i "s|REPLACE_ME_DATABASE_URL|$DATABASE_URL|g" .env
+
+        echo -e "${GREEN}✓${NC} Created .env with your configuration."
+        echo -e "   - WEB_URL: ${web_url}"
+        echo -e "   - SECURITY: Keys generated and stored in .env"
     else
-        echo -e "${BLUE}i${NC} .env already exists, skipping download."
+        echo -e "${BLUE}i${NC} .env already exists. Run option 8 if you want to reset everything."
     fi
 }
 
