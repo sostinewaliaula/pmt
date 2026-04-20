@@ -46,7 +46,7 @@ fix_schema() {
     echo -e "${YELLOW}Applying surgical schema fix for Enterprise migration...${NC}"
     DB_USER=$(grep "^POSTGRES_USER=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
     DB_NAME=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
-    DB_USER=${DB_USER:-caava}
+    DB_USER=${DB_USER:-caava_admin}
     DB_NAME=${DB_NAME:-caava_db}
 
     # Find the real table name (might have prefixes in Enterprise)
@@ -63,9 +63,14 @@ fix_schema() {
 
 clean_ghosts() {
     echo -e "${YELLOW}Cleaning up stuck project names...${NC}"
+    DB_USER=$(grep "^POSTGRES_USER=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
+    DB_NAME=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
+    DB_USER=${DB_USER:-caava_admin}
+    DB_NAME=${DB_NAME:-caava_db}
+
     echo -ne "Enter the name of the project to remove: "
     read project_name
-    docker compose exec -T plane-db psql -U caava -d caava_db -c "DELETE FROM projects WHERE name = '$project_name';"
+    docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -c "DELETE FROM projects WHERE name = '$project_name';"
     echo -e "${GREEN}✓ Project '$project_name' removed.${NC}"
 }
 
@@ -126,7 +131,7 @@ restore_data() {
     # Read DB details precisely from .env (Start of line only)
     DB_USER=$(grep "^POSTGRES_USER=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
     DB_NAME=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
-    DB_USER=${DB_USER:-caava}
+    DB_USER=${DB_USER:-caava_admin}
     DB_NAME=${DB_NAME:-caava_db}
 
     # Use the detected user to connect to the 'template1' system database
