@@ -87,14 +87,15 @@ restore_data() {
 
     # Restore Database
     echo -e "${BLUE}Restoring Database...${NC}"
-    # Read DB details from .env (Default to caava/caava_db if not found)
-    DB_USER=$(grep POSTGRES_USER .env | cut -d'=' -f2 | tr -d '"' | tr -d '\r')
-    DB_NAME=$(grep POSTGRES_DB .env | cut -d'=' -f2 | tr -d '"' | tr -d '\r')
+    # Read DB details precisely from .env (Start of line only)
+    DB_USER=$(grep "^POSTGRES_USER=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
+    DB_NAME=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
     DB_USER=${DB_USER:-caava}
     DB_NAME=${DB_NAME:-caava_db}
 
-    docker compose exec -T plane-db psql -U postgres -c "DROP DATABASE IF EXISTS ${DB_NAME}; CREATE DATABASE ${DB_NAME}; GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
-    docker compose exec -T plane-db psql -U postgres -d ${DB_NAME} < ./restore_tmp/database.sql
+    # Use the detected user to connect to the 'template1' system database
+    docker compose exec -T plane-db psql -U ${DB_USER} -d template1 -c "DROP DATABASE IF EXISTS ${DB_NAME}; CREATE DATABASE ${DB_NAME};"
+    docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} < ./restore_tmp/database.sql
 
     rm -rf ./restore_tmp
     echo -e "${GREEN}✓ Restoration completed successfully!${NC}"
