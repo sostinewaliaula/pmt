@@ -61,8 +61,32 @@ fix_schema() {
         echo -e "${RED}x${NC} Error: Could find workspace_user_link table."
     fi
 
-    # 2. Add future compatibility checks here if more mismatches are found
-    echo -e "\n${GREEN}✓ Schema health check complete.${NC}"
+    # 2. Relax Enterprise-only NOT NULL constraints
+    # These columns block Community software from saving data because it doesn't know values for them.
+    echo -e "\n${YELLOW}Relaxing Enterprise-only mandatory constraints...${NC}"
+    REL_COLS=(
+        "project_members:source"
+        "workspace_user_properties:last_used_filter"
+        "workspace_user_properties:pql_filters"
+        "project_user_properties:last_used_filter"
+        "project_user_properties:pql_filters"
+        "module_user_properties:last_used_filter"
+        "module_user_properties:pql_filters"
+        "issue_views:pql_filters"
+    )
+
+    for entry in "${REL_COLS[@]}"; do
+        T="${entry%%:*}"
+        C="${entry##*:}"
+        # Check if table and column exist before altering
+        EXISTS=$(docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -t -c "SELECT 1 FROM information_schema.columns WHERE table_name='$T' AND column_name='$C';" | tr -d '[:space:]')
+        if [ "$EXISTS" == "1" ]; then
+            docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -c "ALTER TABLE $T ALTER COLUMN $C DROP NOT NULL;" > /dev/null 2>&1
+            echo -e "${BLUE}i${NC} Relaxed: $T.$C"
+        fi
+    done
+
+    echo -e "\n${GREEN}✓ Deep compatibility health check complete.${NC}"
 }
 
 clean_ghosts() {
