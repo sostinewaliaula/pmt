@@ -93,7 +93,16 @@ REST_FRAMEWORK = {
 }
 
 # Django Auth Backend
-AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # default
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+    "plane.authentication.backends.ldap.DynamicLDAPBackend",
+)
+
+# LDAP Configuration Placeholder (Settings will be loaded dynamically from DB)
+AUTH_LDAP_SERVER_URI = os.environ.get("LDAP_SERVER_URI", "")
+AUTH_LDAP_CONNECTION_OPTIONS = {
+    "OPT_REFERRALS": 0,
+}
 
 # Root Urls
 ROOT_URLCONF = "plane.urls"

@@ -10,7 +10,8 @@ export type TCoreInstanceAuthenticationModeKeys =
   | "google"
   | "github"
   | "gitlab"
-  | "gitea";
+  | "gitea"
+  | "ldap";
 
 export type TInstanceAuthenticationModeKeys = TCoreInstanceAuthenticationModeKeys;
 
@@ -31,7 +32,8 @@ export type TInstanceAuthenticationMethodKeys =
   | "IS_GOOGLE_ENABLED"
   | "IS_GITHUB_ENABLED"
   | "IS_GITLAB_ENABLED"
-  | "IS_GITEA_ENABLED";
+  | "IS_GITEA_ENABLED"
+  | "ENABLE_LDAP";
 
 export type TInstanceGoogleAuthenticationConfigurationKeys =
   | "GOOGLE_CLIENT_ID"
@@ -56,11 +58,22 @@ export type TInstanceGiteaAuthenticationConfigurationKeys =
   | "GITEA_CLIENT_SECRET"
   | "ENABLE_GITEA_SYNC";
 
-export type TInstanceAuthenticationConfigurationKeys =
-  | TInstanceGoogleAuthenticationConfigurationKeys
-  | TInstanceGithubAuthenticationConfigurationKeys
-  | TInstanceGitlabAuthenticationConfigurationKeys
-  | TInstanceGiteaAuthenticationConfigurationKeys;
+export type TInstanceLdapAuthenticationConfigurationKeys =
+  | "LDAP_SERVER_URI"
+  | "LDAP_BIND_DN"
+  | "LDAP_BIND_PASSWORD"
+  | "LDAP_USER_SEARCH_BASE"
+  | "LDAP_USER_SEARCH_FILTER"
+  | "LDAP_FULL_NAME_ATTRIBUTE"
+  | "LDAP_EMAIL_ATTRIBUTE";
+
+  | "GITLAB_CLIENT_SECRET"
+  | "ENABLE_GITLAB_SYNC"
+  | "GITEA_HOST"
+  | "GITEA_CLIENT_ID"
+  | "GITEA_CLIENT_SECRET"
+  | "ENABLE_GITEA_SYNC"
+  | TInstanceLdapAuthenticationConfigurationKeys;
 
 export type TInstanceAuthenticationKeys = TInstanceAuthenticationMethodKeys | TInstanceAuthenticationConfigurationKeys;
 
@@ -83,4 +96,4 @@ export type TOAuthConfigs = {
   oAuthOptions: TOAuthOption[];
 };
 
-export type TCoreLoginMediums = "email" | "magic-code" | "github" | "gitlab" | "google" | "gitea";
+export type TCoreLoginMediums = "email" | "magic-code" | "github" | "gitlab" | "google" | "gitea" | "ldap";

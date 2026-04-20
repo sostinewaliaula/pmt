@@ -21,6 +21,7 @@ import { AuthService } from "@/services/auth.service";
 import { AuthEmailForm } from "./email";
 import { AuthPasswordForm } from "./password";
 import { AuthUniqueCodeForm } from "./unique-code";
+import { AuthLDAPForm } from "./ldap";
 
 type TAuthFormRoot = {
   authStep: EAuthSteps;
@@ -132,6 +133,9 @@ export const AuthFormRoot = observer(function AuthFormRoot(props: TAuthFormRoot)
         nextPath={nextPath || undefined}
       />
     );
+  }
+  if (authStep === EAuthSteps.LDAP) {
+    return <AuthLDAPForm handleEmailClear={handleEmailClear} nextPath={nextPath || undefined} />;
   }
 
   return <></>;

@@ -7,7 +7,8 @@
 // plane imports
 import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
-import { API_BASE_URL } from "@plane/constants";
+import { API_BASE_URL, EAuthSteps } from "@plane/constants";
+import { ShieldCheck } from "lucide-react";
 import type { TOAuthConfigs, TOAuthOption } from "@plane/types";
 // assets
 import giteaLogo from "@/app/assets/logos/gitea-logo.svg?url";
@@ -18,7 +19,10 @@ import googleLogo from "@/app/assets/logos/google-logo.svg?url";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
 
-export const useCoreOAuthConfig = (oauthActionText: string): TOAuthConfigs => {
+export const useCoreOAuthConfig = (
+  oauthActionText: string,
+  setAuthStep?: (step: EAuthSteps) => void
+): TOAuthConfigs => {
   //router
   const searchParams = useSearchParams();
   // query params
@@ -33,7 +37,8 @@ export const useCoreOAuthConfig = (oauthActionText: string): TOAuthConfigs => {
       (config?.is_google_enabled ||
         config?.is_github_enabled ||
         config?.is_gitlab_enabled ||
-        config?.is_gitea_enabled)) ||
+        config?.is_gitea_enabled ||
+        config?.is_ldap_enabled)) ||
     false;
   const oAuthOptions: TOAuthOption[] = [
     {
@@ -78,6 +83,15 @@ export const useCoreOAuthConfig = (oauthActionText: string): TOAuthConfigs => {
         window.location.assign(`${API_BASE_URL}/auth/gitea/${next_path ? `?next_path=${next_path}` : ``}`);
       },
       enabled: config?.is_gitea_enabled,
+    },
+    {
+      id: "ldap",
+      text: `${oauthActionText} with LDAP`,
+      icon: <ShieldCheck className="h-[18px] w-[18px] text-secondary" />,
+      onClick: () => {
+        if (setAuthStep) setAuthStep(EAuthSteps.LDAP);
+      },
+      enabled: config?.is_ldap_enabled,
     },
   ];
 

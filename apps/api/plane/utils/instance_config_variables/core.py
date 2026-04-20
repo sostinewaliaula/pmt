@@ -232,6 +232,57 @@ unsplash_config_variables = [
     },
 ]
 
+ldap_config_variables = [
+    {
+        "key": "ENABLE_LDAP",
+        "value": os.environ.get("ENABLE_LDAP", "0"),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "LDAP_SERVER_URI",
+        "value": os.environ.get("LDAP_SERVER_URI", ""),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "LDAP_BIND_DN",
+        "value": os.environ.get("LDAP_BIND_DN", ""),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "LDAP_BIND_PASSWORD",
+        "value": os.environ.get("LDAP_BIND_PASSWORD", ""),
+        "category": "LDAP",
+        "is_encrypted": True,
+    },
+    {
+        "key": "LDAP_USER_SEARCH_BASE",
+        "value": os.environ.get("LDAP_USER_SEARCH_BASE", ""),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "LDAP_USER_SEARCH_FILTER",
+        "value": os.environ.get("LDAP_USER_SEARCH_FILTER", "(sAMAccountName=%(user)s)"),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "LDAP_FULL_NAME_ATTRIBUTE",
+        "value": os.environ.get("LDAP_FULL_NAME_ATTRIBUTE", "displayName"),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "LDAP_EMAIL_ATTRIBUTE",
+        "value": os.environ.get("LDAP_EMAIL_ATTRIBUTE", "mail"),
+        "category": "LDAP",
+        "is_encrypted": False,
+    },
+]
+
 core_config_variables = [
     *authentication_config_variables,
     *workspace_management_config_variables,
@@ -242,4 +293,5 @@ core_config_variables = [
     *smtp_config_variables,
     *llm_config_variables,
     *unsplash_config_variables,
+    *ldap_config_variables,
 ]
