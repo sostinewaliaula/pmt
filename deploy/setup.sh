@@ -1,89 +1,41 @@
 #!/bin/bash
 
-# Caava Group - Project Management One-Line Installer
-# This script downloads necessary orchestration files and manages your instance.
+# Caava Group Project Management - Self-Hosting Setup Script
+# Based on Plane Community Edition
 
-# Set colors
+# Set colors for output messages
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 BOLD='\033[1m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
 REPO_RAW_URL="https://raw.githubusercontent.com/sostinewaliaula/pmt/main/deploy"
-LOG_DIR="./logs"
-LOG_FILE="${LOG_DIR}/caava-setup.log"
 
-mkdir -p "$LOG_DIR"
-
-log() {
-    echo -e "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG_FILE"
-}
-
+# Print header
 echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}${BLUE}              Caava Group - One-Line Installer                        ${NC}"
+echo -e "${BOLD}${BLUE}              Caava Group - Project Management Tool                   ${NC}"
 echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Self-Hosting Management Script${NC}\n"
+
+# Check if docker is installed
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}Error: Docker is not installed. Please install Docker first.${NC}"
+    exit 1
+fi
 
 show_menu() {
-    echo -e "\n${BOLD}Select an action you want to perform:${NC}"
-    echo -e "   1) ${GREEN}Install/Update${NC} (Download orchestration files)"
-    echo -e "   2) ${BLUE}Start Services${NC} (Fetch containers & Launch)"
-    echo -e "   3) ${YELLOW}Stop Services${NC}"
-    echo -e "   4) ${BLUE}Restart Services${NC}"
-    echo -e "   5) ${BLUE}View Logs${NC}"
-    echo -e "   6) ${RED}Backup Data${NC} (Database & Uploads)"
-    echo -e "   7) ${RED}Restore Data${NC} (From backup file)"
+    echo -e "${BOLD}Select an action you want to perform:${NC}"
+    echo -e "   1) ${GREEN}Install / Setup Env${NC} (Copy .env files & generate keys)"
+    echo -e "   2) ${GREEN}Build Caava Group Images${NC} (From local source)"
+    echo -e "   3) ${BLUE}Start Services${NC} (docker-compose up)"
+    echo -e "   4) ${YELLOW}Stop Services${NC} (docker-compose down)"
+    echo -e "   5) ${BLUE}Restart Services${NC}"
+    echo -e "   6) ${BLUE}View Logs${NC}"
+    echo -e "   7) ${RED}Restore Data${NC} (Full or DB Only)"
     echo -e "   8) Exit"
-    echo -ne "\nAction [2]: "
-}
-
-install() {
-    echo -e "${YELLOW}Installing Caava Group orchestration files...${NC}"
-
-    # Download files to current directory
-    echo -e "${BLUE}Downloading orchestration files from GitHub...${NC}"
-    curl -fsSL -o docker-compose.yml "${REPO_RAW_URL}/docker-compose.yml"
-    
-    if [ ! -f ".env" ]; then
-        curl -fsSL -o .env "${REPO_RAW_URL}/caava.env.example"
-        # Generate SECRET_KEY and LIVE_SERVER_SECRET_KEY
-        SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
-        LIVE_SECRET=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
-        echo -e "\nSECRET_KEY=\"$SECRET_KEY\"" >> .env
-        echo -e "LIVE_SERVER_SECRET_KEY=\"$LIVE_SECRET\"" >> .env
-        echo -e "${GREEN}✓ Created .env with new Security Keys${NC}"
-    else
-        echo -e "${BLUE}i${NC} .env already exists, skipping download to protect your settings."
-    fi
-
-    echo -e "${GREEN}✓ Deployment files are ready in $(pwd)${NC}"
-    echo -e "${YELLOW}Next Step: Edit the .env file to set your WEB_URL, then run Option 2 to Start.${NC}"
-}
-
-backup_data() {
-    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-    BACKUP_NAME="caava-backup-${TIMESTAMP}"
-    mkdir -p ./backups/"$BACKUP_NAME"
-
-    echo -e "${YELLOW}Starting Full Backup...${NC}"
-    log "Starting backup: $BACKUP_NAME"
-    
-    # 1. Backup Database
-    echo -e "${BLUE}Dumping Database...${NC}"
-    docker compose exec -T plane-db pg_dump -U caava_admin caava_db > ./backups/"$BACKUP_NAME"/database.sql 2>> "$LOG_FILE"
-    
-    # 2. Backup Uploads (Minio Volume)
-    echo -e "${BLUE}Compressing Uploads...${NC}"
-    MINIO_ID=$(docker compose ps -q plane-minio)
-    docker run --rm --volumes-from "$MINIO_ID" -v $(pwd)/backups/"$BACKUP_NAME":/backup alpine tar czf /backup/uploads.tar.gz -C /export . 2>> "$LOG_FILE"
-
-    # 3. Final compression
-    tar -czf ./backups/"$BACKUP_NAME".tar.gz -C ./backups/"$BACKUP_NAME" . 2>> "$LOG_FILE"
-    rm -rf ./backups/"$BACKUP_NAME"
-
-    echo -e "${GREEN}✓ Backup created: ./backups/${BACKUP_NAME}.tar.gz${NC}"
-    log "Backup completed successfully."
+    echo -ne "\nAction [3]: "
 }
 
 restore_data() {
@@ -93,47 +45,91 @@ restore_data() {
 
     if [ ! -f "$backup_file" ]; then
         echo -e "${RED}Error: Backup file not found.${NC}"
-        log "Restore failed: File $backup_file not found."
         return
     fi
 
+    echo -e "\n${BOLD}Select Restoration Type:${NC}"
+    echo -e "   1) ${BLUE}Database Only${NC} (Cleanest - No old logos/attachments)"
+    echo -e "   2) ${GREEN}Full Restore${NC} (Includes all uploads/images)"
+    echo -ne "\nChoice [1]: "
+    read restore_choice
+
     echo -e "${YELLOW}Preparing restoration...${NC}"
-    log "Starting restoration from $backup_file"
     mkdir -p ./restore_tmp
-    tar -xzf "$backup_file" -C ./restore_tmp 2>> "$LOG_FILE"
+    tar -xzf "$backup_file" -C ./restore_tmp
 
-    # 1. Restore Uploads
-    echo -e "${BLUE}Restoring Uploads...${NC}"
-    MINIO_ID=$(docker compose ps -q plane-minio)
-    docker run --rm -v ./restore_tmp:/backup --volumes-from "$MINIO_ID" alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export" 2>> "$LOG_FILE"
+    if [[ "$restore_choice" == "2" ]]; then
+        # Restore Uploads
+        echo -e "${BLUE}Restoring Uploads...${NC}"
+        # We find the volume name dynamically
+        UPLOAD_VOL=$(docker volume ls -q | grep uploads | head -n 1)
+        docker run --rm -v ./restore_tmp:/backup -v "$UPLOAD_VOL":/export alpine sh -c "rm -rf /export/* && tar xzf /backup/uploads.tar.gz -C /export"
+    else
+        # Wipe Uploads (Clean Start)
+        echo -e "${BLUE}Wiping existing storage for a clean start...${NC}"
+        UPLOAD_VOL=$(docker volume ls -q | grep uploads | head -n 1)
+        docker run --rm -v "$UPLOAD_VOL":/export alpine sh -c "rm -rf /export/*"
+    fi
 
-    # 2. Restore Database
+    # Restore Database
     echo -e "${BLUE}Restoring Database...${NC}"
-    # Fresh Slate: Drop and recreate schema
-    docker compose exec -T plane-db psql -U caava_admin -d caava_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>> "$LOG_FILE"
-    docker compose exec -T plane-db psql -U caava_admin -d caava_db < ./restore_tmp/database.sql 2>> "$LOG_FILE"
+    docker compose exec -T plane-db psql -U caava -d caava_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+    docker compose exec -T plane-db psql -U caava -d caava_db < ./restore_tmp/database.sql
 
     rm -rf ./restore_tmp
     echo -e "${GREEN}✓ Restoration completed successfully!${NC}"
-    log "Restoration completed successfully."
 }
 
-start() {
+setup_env() {
+    echo -e "\n${YELLOW}Setting up orchestration and environment files...${NC}"
+
+    # 1. Download docker-compose.yml if missing
     if [ ! -f "docker-compose.yml" ]; then
-        echo -e "${RED}Error: docker-compose.yml not found. Please run Install (1) first.${NC}"
-        return
+        echo -e "${BLUE}Downloading docker-compose.yml from GitHub...${NC}"
+        curl -fsSL -o docker-compose.yml "${REPO_RAW_URL}/docker-compose.yml"
     fi
-    echo -e "${BLUE}Fetching latest Caava Group containers...${NC}"
-    docker compose pull
-    echo -e "${GREEN}Starting services...${NC}"
-    docker compose up -d
+    
+    # 2. Setup .env
+    if [ ! -f ".env" ]; then
+        echo -e "${BLUE}Downloading .env.example from GitHub...${NC}"
+        curl -fsSL -o .env.example "${REPO_RAW_URL}/caava.env.example"
+        cp .env.example .env
+        echo -e "${GREEN}✓${NC} Created .env from remote example"
+        
+        # Generate Security Keys and Backend Glue
+        echo -e "${YELLOW}Generating Security Keys and Backend Glue...${NC}"
+        SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
+        LIVE_SECRET=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
+        echo -e "\n# Security Keys" >> .env
+        echo -e "SECRET_KEY=\"$SECRET_KEY\"" >> .env
+        echo -e "LIVE_SERVER_SECRET_KEY=\"$LIVE_SECRET\"" >> .env
+        echo -e "\n# Backend Connection URLs" >> .env
+        echo -e "REDIS_URL=redis://plane-redis:6379/0" >> .env
+        echo -e "DATABASE_URL=postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@plane-db:5432/\${POSTGRES_DB}" >> .env
+    else
+        echo -e "${BLUE}i${NC} .env already exists, skipping download."
+    fi
 }
 
-stop() {
+build_images() {
+    echo -e "\n${YELLOW}Building Caava Group personalized images...${NC}"
+    echo -e "${BLUE}This might take several minutes depending on your system.${NC}"
+    docker compose build
+}
+
+start_services() {
+    echo -e "\n${GREEN}Starting Caava Group services...${NC}"
+    docker compose up -d
+    echo -e "\n${GREEN}Services started! Access your instance via WEB_URL configured in your .env${NC}"
+}
+
+stop_services() {
+    echo -e "\n${YELLOW}Stopping Caava Group services...${NC}"
     docker compose down
 }
 
-restart() {
+restart_services() {
+    echo -e "\n${BLUE}Restarting Caava Group services...${NC}"
     docker compose restart
 }
 
@@ -145,19 +141,21 @@ while true; do
     show_menu
     read choice
     
+    # Default to 3 (Start) if input is empty
     if [ -z "$choice" ]; then
-        choice=2
+        choice=3
     fi
 
     case $choice in
-        1) install ;;
-        2) start ;;
-        3) stop ;;
-        4) restart ;;
-        5) view_logs ;;
-        6) backup_data ;;
+        1) setup_env ;;
+        2) build_images ;;
+        3) start_services ;;
+        4) stop_services ;;
+        5) restart_services ;;
+        6) view_logs ;;
         7) restore_data ;;
         8) exit 0 ;;
-        *) echo -e "${RED}Invalid option.${NC}" ;;
+        *) echo -e "${RED}Invalid option, please try again.${NC}" ;;
     esac
+    echo -e "\n"
 done
