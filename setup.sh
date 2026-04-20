@@ -94,7 +94,16 @@ restore_data() {
     DB_NAME=${DB_NAME:-caava_db}
 
     # Use the detected user to connect to the 'template1' system database
-    docker compose exec -T plane-db psql -U ${DB_USER} -d template1 -c "DROP DATABASE IF EXISTS ${DB_NAME}; CREATE DATABASE ${DB_NAME};"
+    echo -e "${YELLOW}Forcefully resetting database '${DB_NAME}'...${NC}"
+    # 1. Kill all active connections to the database so we can drop it
+    docker compose exec -T plane-db psql -U ${DB_USER} -d template1 -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '${DB_NAME}' AND pid <> pg_backend_pid();" > /dev/null 2>&1
+    
+    # 2. Drop and Recreate in separate transactions
+    docker compose exec -T plane-db psql -U ${DB_USER} -d template1 -c "DROP DATABASE IF EXISTS ${DB_NAME};"
+    docker compose exec -T plane-db psql -U ${DB_USER} -d template1 -c "CREATE DATABASE ${DB_NAME};"
+    
+    # 3. Perform the import
+    echo -e "${BLUE}Importing data from backup...${NC}"
     docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} < ./restore_tmp/database.sql
 
     rm -rf ./restore_tmp
