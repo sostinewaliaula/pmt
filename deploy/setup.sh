@@ -36,8 +36,37 @@ show_menu() {
     echo -e "   7) ${RED}Restore Data${NC} (Full or DB Only)"
     echo -e "   8) ${RED}Wipe Instance Data${NC} (Reset all volumes)"
     echo -e "   9) ${YELLOW}Run Database Migrations${NC} (Fix schema errors)"
-    echo -e "   10) Exit"
+    echo -e "   10) ${RED}Force Fix Enterprise Schema${NC} (Surgical fix for project_id)"
+    echo -e "   11) ${BLUE}Clean Ghost Projects${NC} (Remove stuck Test projects)"
+    echo -e "   12) Exit"
     echo -ne "\nAction [3]: "
+}
+
+fix_schema() {
+    echo -e "${YELLOW}Applying surgical schema fix for Enterprise migration...${NC}"
+    DB_USER=$(grep "^POSTGRES_USER=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
+    DB_NAME=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r')
+    DB_USER=${DB_USER:-caava}
+    DB_NAME=${DB_NAME:-caava_db}
+
+    # Find the real table name (might have prefixes in Enterprise)
+    TABLE_NAME=$(docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -t -c "SELECT tablename FROM pg_tables WHERE tablename LIKE '%workspace_user_link%' LIMIT 1;" | tr -d '[:space:]')
+    
+    if [ -n "$TABLE_NAME" ]; then
+        echo -e "${BLUE}Found table: $TABLE_NAME. Injecting column...${NC}"
+        docker compose exec -T plane-db psql -U ${DB_USER} -d ${DB_NAME} -c "ALTER TABLE ${TABLE_NAME} ADD COLUMN IF NOT EXISTS project_id uuid REFERENCES projects(id) ON DELETE CASCADE;"
+        echo -e "${GREEN}✓ Column 'project_id' successfully injected into '${TABLE_NAME}'.${NC}"
+    else
+        echo -e "${RED}Error: Could not find any workspace_user_link table.${NC}"
+    fi
+}
+
+clean_ghosts() {
+    echo -e "${YELLOW}Cleaning up stuck project names...${NC}"
+    echo -ne "Enter the name of the project to remove: "
+    read project_name
+    docker compose exec -T plane-db psql -U caava -d caava_db -c "DELETE FROM projects WHERE name = '$project_name';"
+    echo -e "${GREEN}✓ Project '$project_name' removed.${NC}"
 }
 
 run_migrations() {
@@ -193,7 +222,9 @@ while true; do
         7) restore_data ;;
         8) wipe_data ;;
         9) run_migrations ;;
-        10) exit 0 ;;
+        10) fix_schema ;;
+        11) clean_ghosts ;;
+        12) exit 0 ;;
         *) echo -e "${RED}Invalid option, please try again.${NC}" ;;
     esac
     echo -e "\n"
