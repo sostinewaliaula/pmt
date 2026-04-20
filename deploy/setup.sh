@@ -28,14 +28,28 @@ fi
 show_menu() {
     echo -e "${BOLD}Select an action you want to perform:${NC}"
     echo -e "   1) ${GREEN}Install / Setup Env${NC} (Copy .env files & generate keys)"
-    echo -e "   2) ${GREEN}Build Caava Group Images${NC} (From local source)"
+    echo -e "   2) ${BLUE}Download Latest Release${NC} (Pull images from GitHub)"
     echo -e "   3) ${BLUE}Start Services${NC} (docker-compose up)"
     echo -e "   4) ${YELLOW}Stop Services${NC} (docker-compose down)"
     echo -e "   5) ${BLUE}Restart Services${NC}"
     echo -e "   6) ${BLUE}View Logs${NC}"
     echo -e "   7) ${RED}Restore Data${NC} (Full or DB Only)"
-    echo -e "   8) Exit"
+    echo -e "   8) ${RED}Wipe Instance Data${NC} (Reset all volumes)"
+    echo -e "   9) Exit"
     echo -ne "\nAction [3]: "
+}
+
+wipe_data() {
+    echo -e "${RED}${BOLD}🚨 WARNING: This will permanently delete your database and all uploaded files!${NC}"
+    echo -ne "Are you sure you want to completely reset this instance? (y/N): "
+    read confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}Wiping all instance data...${NC}"
+        docker compose down -v
+        echo -e "${GREEN}✓ Done. Instance has been reset to a clean state.${NC}"
+    else
+        echo -e "${BLUE}Wipe cancelled.${NC}"
+    fi
 }
 
 restore_data() {
@@ -111,10 +125,10 @@ setup_env() {
     fi
 }
 
-build_images() {
-    echo -e "\n${YELLOW}Building Caava Group personalized images...${NC}"
-    echo -e "${BLUE}This might take several minutes depending on your system.${NC}"
-    docker compose build
+pull_images() {
+    echo -e "\n${YELLOW}Downloading your latest Caava Group release...${NC}"
+    docker compose pull
+    echo -e "${GREEN}✓ Done. Pull complete.${NC}"
 }
 
 start_services() {
@@ -148,13 +162,14 @@ while true; do
 
     case $choice in
         1) setup_env ;;
-        2) build_images ;;
+        2) pull_images ;;
         3) start_services ;;
         4) stop_services ;;
         5) restart_services ;;
         6) view_logs ;;
         7) restore_data ;;
-        8) exit 0 ;;
+        8) wipe_data ;;
+        9) exit 0 ;;
         *) echo -e "${RED}Invalid option, please try again.${NC}" ;;
     esac
     echo -e "\n"
