@@ -58,21 +58,11 @@ export type TInstanceGiteaAuthenticationConfigurationKeys =
   | "GITEA_CLIENT_SECRET"
   | "ENABLE_GITEA_SYNC";
 
-export type TInstanceLdapAuthenticationConfigurationKeys =
-  | "LDAP_SERVER_URI"
-  | "LDAP_BIND_DN"
-  | "LDAP_BIND_PASSWORD"
-  | "LDAP_USER_SEARCH_BASE"
-  | "LDAP_USER_SEARCH_FILTER"
-  | "LDAP_FULL_NAME_ATTRIBUTE"
-  | "LDAP_EMAIL_ATTRIBUTE";
-
-  | "GITLAB_CLIENT_SECRET"
-  | "ENABLE_GITLAB_SYNC"
-  | "GITEA_HOST"
-  | "GITEA_CLIENT_ID"
-  | "GITEA_CLIENT_SECRET"
-  | "ENABLE_GITEA_SYNC"
+export type TInstanceAuthenticationConfigurationKeys =
+  | TInstanceGoogleAuthenticationConfigurationKeys
+  | TInstanceGithubAuthenticationConfigurationKeys
+  | TInstanceGitlabAuthenticationConfigurationKeys
+  | TInstanceGiteaAuthenticationConfigurationKeys
   | TInstanceLdapAuthenticationConfigurationKeys;
 
 export type TInstanceAuthenticationKeys = TInstanceAuthenticationMethodKeys | TInstanceAuthenticationConfigurationKeys;
