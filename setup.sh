@@ -11,6 +11,8 @@ RED='\033[0;31m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
+REPO_RAW_URL="https://raw.githubusercontent.com/sostinewaliaula/pmt/main/deploy"
+
 # Print header
 echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}${BLUE}              Caava Group - Project Management Tool                   ${NC}"
@@ -79,32 +81,33 @@ restore_data() {
 }
 
 setup_env() {
-    echo -e "\n${YELLOW}Setting up environment files...${NC}"
-    services=("" "web" "api" "space" "admin" "live")
+    echo -e "\n${YELLOW}Setting up orchestration and environment files...${NC}"
+
+    # 1. Download docker-compose.yml if missing
+    if [ ! -f "docker-compose.yml" ]; then
+        echo -e "${BLUE}Downloading docker-compose.yml from GitHub...${NC}"
+        curl -fsSL -o docker-compose.yml "${REPO_RAW_URL}/docker-compose.yml"
+    fi
     
-    for service in "${services[@]}"; do
-        if [ "$service" == "" ]; then
-            prefix="./"
-        else
-            prefix="./apps/$service/"
-        fi
-
-        if [ ! -f "${prefix}.env" ]; then
-            if [ -f "${prefix}.env.example" ]; then
-                cp "${prefix}.env.example" "${prefix}.env"
-                echo -e "${GREEN}✓${NC} Created ${prefix}.env from example"
-            fi
-        else
-            echo -e "${BLUE}i${NC} ${prefix}.env already exists, skipping."
-        fi
-    done
-
-    # Generate SECRET_KEY for Django if not already there
-    if [ -f "./apps/api/.env" ] && ! grep -q "SECRET_KEY" "./apps/api/.env"; then
-        echo -e "${YELLOW}Generating Django SECRET_KEY...${NC}"
+    # 2. Setup .env
+    if [ ! -f ".env" ]; then
+        echo -e "${BLUE}Downloading .env.example from GitHub...${NC}"
+        curl -fsSL -o .env.example "${REPO_RAW_URL}/caava.env.example"
+        cp .env.example .env
+        echo -e "${GREEN}✓${NC} Created .env from remote example"
+        
+        # Generate Security Keys and Backend Glue
+        echo -e "${YELLOW}Generating Security Keys and Backend Glue...${NC}"
         SECRET_KEY=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
-        echo -e "SECRET_KEY=\"$SECRET_KEY\"" >> ./apps/api/.env
-        echo -e "${GREEN}✓${NC} Added SECRET_KEY to apps/api/.env"
+        LIVE_SECRET=$(tr -dc 'a-z0-9' < /dev/urandom | head -c50)
+        echo -e "\n# Security Keys" >> .env
+        echo -e "SECRET_KEY=\"$SECRET_KEY\"" >> .env
+        echo -e "LIVE_SERVER_SECRET_KEY=\"$LIVE_SECRET\"" >> .env
+        echo -e "\n# Backend Connection URLs" >> .env
+        echo -e "REDIS_URL=redis://plane-redis:6379/0" >> .env
+        echo -e "DATABASE_URL=postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@plane-db:5432/\${POSTGRES_DB}" >> .env
+    else
+        echo -e "${BLUE}i${NC} .env already exists, skipping download."
     fi
 }
 
