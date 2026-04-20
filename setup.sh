@@ -35,8 +35,15 @@ show_menu() {
     echo -e "   6) ${BLUE}View Logs${NC}"
     echo -e "   7) ${RED}Restore Data${NC} (Full or DB Only)"
     echo -e "   8) ${RED}Wipe Instance Data${NC} (Reset all volumes)"
-    echo -e "   9) Exit"
+    echo -e "   9) ${YELLOW}Run Database Migrations${NC} (Fix schema errors)"
+    echo -e "   10) Exit"
     echo -ne "\nAction [3]: "
+}
+
+run_migrations() {
+    echo -e "${YELLOW}Running Database Migrations...${NC}"
+    docker compose exec -T plane-api python manage.py migrate
+    echo -e "${GREEN}✓ Done. Database schema is now up to date.${NC}"
 }
 
 wipe_data() {
@@ -185,7 +192,8 @@ while true; do
         6) view_logs ;;
         7) restore_data ;;
         8) wipe_data ;;
-        9) exit 0 ;;
+        9) run_migrations ;;
+        10) exit 0 ;;
         *) echo -e "${RED}Invalid option, please try again.${NC}" ;;
     esac
     echo -e "\n"
